@@ -26,6 +26,10 @@ Niveau test par secondes, il arrive à environ 333 333 t/s je dirais (en tout ca
 
 Pour te donner un indice de la lenteur de ce programme, il a mis environ 1h22 à cracker ce hash : ``ab4f63f9ac65152575886860dde480a1`` (md5). Ce super hash qui donne une impression de complexité et de difficulté de crackage par un ordinateur (comme tout les hashs en fait) correspond en fait à la string ``azerty``. Tout simplement.
 
+Pour plus de performance, je suis en train de développer une version utilisant le module ``worker_threads`` de Nodejs. Cette version devrait donc amener plus de performances, mais bon c'est en cours de développement, et c'est même loin d'être terminé...
+
+Si toutefois t'es intéressé(e), tu peux aller jeter un petit coup d'oeil dans la branche ``worker`` de ce repo : https://github.com/Ptitet/Nodejs-password-cracker/tree/worker (et si t'as du temps à perdre, un peu d'aide à coup de ``pull requests`` serait pas de refus... 👀).
+
 ### Pour finir...
 
 Ben je crois que j'ai déjà tout dit hein...
