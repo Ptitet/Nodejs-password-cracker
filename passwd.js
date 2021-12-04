@@ -1,4 +1,8 @@
-const { SHA512: sha512, MD5: md5, SHA256: sha256 } = require('crypto-js');
+const { createHash } = require('crypto');
+
+function hash(input, algo) {
+    return createHash(algo).update(input).digest('hex');
+}
 
 async function crack(password, method) {
 
@@ -8,77 +12,38 @@ async function crack(password, method) {
 
     console.log(`Cracking ${password} (using ${method})...`);
 
-    switch(method) {
-        case 'md5': {
-            let guess = 'a';
-            let eguess = md5(guess).toString();
-            let test = 1;
+    let guess = 'a';
+    let eguess = hash(guess, method);
+    let test = 1;
 
-            while(eguess !== password) {
-                let last = guess[guess.length - 1];
-                if (last === '9') {
-                    let arr = guess.split('');
-                    for (i in arr) {
-                        if (arr[arr.length - i - 1] === '9') {
-                            arr.splice(arr.length - i - 1, 1, 'a');
-                            if (!arr[arr.length - i - 2]) arr.unshift('a');
-                            else if (!(arr[arr.length - i - 2] === '9')) {
-                                arr.splice(arr.length - i - 2, 1, dico[dico.indexOf(arr[arr.length - i - 2]) + 1]);
-                                break;
-                            }
-                        }
+    while(eguess !== password) {
+        let last = guess[guess.length - 1];
+        if (last === '9') {
+            let arr = guess.split('');
+            for (i in arr) {
+                if (arr[arr.length - i - 1] === '9') {
+                    arr.splice(arr.length - i - 1, 1, 'a');
+                    if (!arr[arr.length - i - 2]) arr.unshift('a');
+                    else if (!(arr[arr.length - i - 2] === '9')) {
+                        arr.splice(arr.length - i - 2, 1, dico[dico.indexOf(arr[arr.length - i - 2]) + 1]);
+                        break;
                     }
-                    guess = arr.join('');
-                } else {
-                    guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
                 }
-                eguess = md5(guess).toString();
-                if (test % 1000000 === 0) console.log(`Current test : ${guess} (${eguess})\nTest n°${test}`);
-                test ++;
             }
-
-            const time = Date.now() - start;
-
-            console.log(`Your password is : ${guess}\nTime taken : ${time} ms\nTotal test : ${test}`);
-
-            process.exit(0);
-        }
-
-        case 'sha256': {
-            let guess = 'a';
-            let eguess = sha256(guess).toString();
-            let test = 1;
-
-            while(eguess !== password) {
-                let last = guess[guess.length - 1];
-                if (last === '9') {
-                    let arr = guess.split('');
-                    for (i in arr) {
-                        if (arr[arr.length - i - 1] === '9') {
-                            arr.splice(arr.length - i - 1, 1, 'a');
-                            if (!arr[arr.length - i - 2]) arr.unshift('a');
-                            else if (!(arr[arr.length - i - 2] === '9')) {
-                                arr.splice(arr.length - i - 2, 1, dico[dico.indexOf(arr[arr.length - i - 2]) + 1]);
-                                break;
-                            }
-                        }
-                    }
-                    guess = arr.join('');
-                } else {
-                    guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
+            guess = arr.join('');
+        } else {
+            guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
                 }
-                eguess = sha256(guess).toString();
-                if (test % 1000000 === 0) console.log(`Current test : ${guess} (${eguess})\nTest n°${test}`);
-                test ++;
-            }
-
-            const time = Date.now() - start;
-
-            console.log(`Your password is : ${guess}\nTime taken : ${time} ms\nTotal test : ${test}`);
-
-            process.exit(0);
-        }
+        eguess = hash(guess, method);
+        if (test % 1000000 === 0) console.log(`Current test : ${guess} (${eguess})\nTest n°${test}`);
+        test ++;
     }
+
+    const time = Date.now() - start;
+
+    console.log(`Your password is : ${guess}\nTime taken : ${time} ms\nTotal test : ${test}`);
+
+    return process.exit(0);
 }
 
 // exemple de comment la fonction marche
