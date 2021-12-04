@@ -1,4 +1,4 @@
-const {SHA512: sha512, MD5: md5, SHA256: sha256} = require('crypto-js');
+const { SHA512: sha512, MD5: md5, SHA256: sha256 } = require('crypto-js');
 
 async function crack(password, method) {
 
@@ -81,8 +81,10 @@ async function crack(password, method) {
     }
 }
 
-crack(md5('azerty').toString(), 'md5');
+// exemple de comment la fonction marche
+crack('73b43f17232b391b9123adf40c1b65dd', 'md5');
 
+//quelques petits hashs md5 qui sont là pour test
 //ab = 187ef4436122d1cc2f40dc2b92f0eba0
 //hell0 = 73b43f17232b391b9123adf40c1b65dd
 //L0Zs = b01279944c7300116289e08b61be2149
