@@ -9,7 +9,6 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "crypto-js": "^4.1.1",
     "node": "^17.1.0"
   }
 }
