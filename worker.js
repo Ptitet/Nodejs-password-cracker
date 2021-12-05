@@ -1,12 +1,16 @@
 const { parentPort } = require('worker_threads');
-const {MD5: md5} = require('crypto-js');
+const { createHash } = require('crypto');
+
+function hash(input, algo) {
+    return createHash(algo).update(input).digest('hex');
+}
 
 const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
 parentPort.on('message', message => {
     parentPort.postMessage('starting');
     let guess = message.from;
-    let eguess = md5(guess).toString();
+    let eguess = hash(guess, 'md5');
     const password = message.hash;
 
     while(eguess !== password) {
@@ -27,7 +31,7 @@ parentPort.on('message', message => {
         } else {
             guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
         }
-        eguess = md5(guess).toString();
+        eguess = hash(guess, 'md5');
     }
 
     parentPort.postMessage(guess);
