@@ -7,75 +7,65 @@ function hash(input, algo) {
     return createHash(algo).update(input).digest('hex');
 }
 
-function createWorker(path, id) {
-
-    return new Promise((resolve, reject) => {
-        const worker = new Worker(path);
-        worker.id = id;
-        resolve(worker);
-
-        worker.on('online', () => {
-            console.log('Worker ready');
-        });
-
-        worker.on('message', message => {
-            if (message === 'starting') console.log('starting worker');
-            else {
-                console.log('passwd : ' + message);
-                return process.exit(0);
-            }
-            
-        });
-
-        worker.on('error', reject);
-        worker.on('exit', code => {
-            if (code !== 0) reject(new Error(`Whoops\nWorker stopped with code ${code}`));
-        });
-    });
-}
-
-createWorker('./worker.js').then(worker => {
-    console.log('gooo');
-    worker.postMessage({from: 'a', to: '9999', hash: 'b01279944c7300116289e08b61be2149'});
-});
-
-function crack(input, algo, nbOfWorkers) {
-    let from = 'a';
-    let to = 'aaaaa';
-    'aaaab -> baaaa';
-    'baaab -> caaaa';
-    for(let i = 0; i < 50000000; i++) {
-        let last = from[from.length - 1];
-        if (last === '9') {
-            let arr = from.split('');
-            for (i in arr) {
-                if (arr[arr.length - i - 1] === '9') {
-                    arr.splice(arr.length - i - 1, 1, 'a');
-                    if (!arr[arr.length - i - 2]) arr.unshift('a');
-                    else if (!(arr[arr.length - i - 2] === '9')) {
-                        arr.splice(arr.length - i - 2, 1, dico[dico.indexOf(arr[arr.length - i - 2]) + 1]);
-                        break;
-                    }
+function next(input) {
+    input = input.slice(0, input.length  - 4);
+    let last = input[input.length - 1];
+    if (last === '9') {
+        let arr = input.split('');
+        for (i in arr) {
+            if (arr[arr.length - i - 1] === '9') {
+                arr.splice(arr.length - i - 1, 1, 'a');
+                if (!arr[arr.length - i - 2]) arr.unshift('a');
+                else if (!(arr[arr.length - i - 2] === '9')) {
+                    arr.splice(arr.length - i - 2, 1, dico[dico.indexOf(arr[arr.length - i - 2]) + 1]);
+                    break;
                 }
             }
-            guess = arr.join('');
-        } else {
-            guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
         }
-        eguess = hash(guess, 'md5');
-    }
-    let workers = [];
-    for (i = 0; i < nbOfWorkers; i++) {
-        createWorker('./worker.js').then(worker => {
-            workers.push(worker);
-            worker.postMessage({from: current, to: function() {
-                
-            }})
-        });
-    }
+        return `${arr.join('')}aaaa`;
+    } else return `${input.slice(0, -1)}${dico[dico.indexOf(last) + 1]}aaaa`;
 }
 
-crack('b01279944c7300116289e08b61be2149', 'md5');
+function crack(input, algo, nbOfWorkers) {
+console.log(`Starting cracking ${input} (using ${algo})\nSpawning ${nbOfWorkers} workers...`);
+
+    let from = 'a';
+    let to = 'aaaaa';
+    const workers = [];
+
+    for (let i = 0; i < nbOfWorkers; i++) {
+        const worker = new Worker('./worker.js');
+        workers.push(worker);
+        worker.once('online', () => {
+            console.log(`Worker ${i} is online`);
+        });
+        worker.postMessage({from: from, to: to, input: input, algo: algo, id: i});
+        console.log(`Starting Worker ${i} with interval ${from} - ${to}`);
+        from = to;
+        to = next(to);
+        worker.on('message', message => {
+            if (message.password) {
+                console.log(`Worker ${i} found the password !\nPassword : ${message.password}`);
+                workers.map(w => w.terminate());
+                return process.exit(0);
+            } else if (message.request) {
+                worker.postMessage({from : from, to: to});
+                console.log(`Starting Worker ${i} with interval ${from} - ${to}`);
+                from = to;
+                to = next(to);
+            }
+        });
+        worker.on('error', error => {
+            console.error(`Error Worker ${i} : ${error.name}\n${error.message}`);
+        });
+        worker.on('exit', () => {
+            console.log(`Terminate Worker ${i}`);
+        });
+    }
+    console.log(`All the worker are processing ${input}`);
+}
+
+crack(hash('zerty', 'md5'), 'md5', 1);
 
 //ab = 187ef4436122d1cc2f40dc2b92f0eba0
 //hell0 = 73b43f17232b391b9123adf40c1b65dd

@@ -1,5 +1,7 @@
 const { parentPort } = require('worker_threads');
 const { createHash } = require('crypto');
+const { Console } = require('console');
+const log = new Console(process.stdout, process.stderr);
 
 function hash(input, algo) {
     return createHash(algo).update(input).digest('hex');
@@ -7,16 +9,32 @@ function hash(input, algo) {
 
 const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
-parentPort.on('message', message => {
-    parentPort.postMessage('starting');
-    let guess = message.from;
-    let eguess = hash(guess, 'md5');
-    const password = message.hash;
+let firstMsg = true;
+let algo, input, from, to;
 
-    while(eguess !== password) {
-        let last = guess[guess.length - 1];
+parentPort.on('message', message => {
+    //parentPort.postMessage({password: 'lol'});
+    /*if (firstMsg) {
+        console.log('helloooooooo');
+        algo = message.algo;
+        input = message.input;
+        firstMsg = false;
+    }*/
+    log.log('hello');
+
+
+    from = message.from;
+    to = message.to;
+
+    let eguess = hash(from, message.algo);
+    let test = 1;
+
+    log.log(eguess, input, eguess === input);
+
+    while(eguess !== input) {
+        let last = from[from.length - 1];
         if (last === '9') {
-            let arr = guess.split('');
+            let arr = from.split('');
             for (i in arr) {
                 if (arr[arr.length - i - 1] === '9') {
                     arr.splice(arr.length - i - 1, 1, 'a');
@@ -27,12 +45,14 @@ parentPort.on('message', message => {
                     }
                 }
             }
-            guess = arr.join('');
-        } else {
-            guess = `${guess.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
-        }
-        eguess = hash(guess, 'md5');
+            from = arr.join('');
+        } else from = `${from.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
+        eguess = hash(from, message.algo);
+        log.log(`test n°${test}`);
+        test++;
     }
 
-    parentPort.postMessage(guess);
+    if (eguess === input) parentPort.postMessage({password: from});
+    else parentPort.postMessage({request: true});
+
 });
