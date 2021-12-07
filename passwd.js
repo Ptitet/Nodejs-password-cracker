@@ -47,7 +47,9 @@ function next(input) {
  */
 
 function crack(input, algo, nbOfWorkers) {
-    console.log(`Starting cracking ${input} (using ${algo})\nSpawning ${nbOfWorkers} workers...`);
+    const start = Date.now();
+
+    console.log(`Starting cracking ${input} (using ${algo})\nSpawning ${nbOfWorkers} workers...\n`);
 
     let from = 'a';
     let to = 'aaaaa';
@@ -56,36 +58,34 @@ function crack(input, algo, nbOfWorkers) {
     for (let i = 0; i < nbOfWorkers; i++) {
         const worker = new Worker('./worker.js');
         workers.push(worker);
-        worker.once('online', () => {
-            console.log(`Worker ${i} is online`);
-        });
-        worker.postMessage({from: from, to: to, input: input, algo: algo, id: i});
-        console.log(`Starting Worker ${i} with interval ${from} - ${to}`);
-        from = to;
-        to = next(to);
         worker.on('message', message => {
             if (message.password) {
-                console.log(`Worker ${i} found the password !\nPassword : ${message.password}`);
+                const time = Date.now() - start;
+                console.log(`\nWorker [${i}] found the password !\nPassword : ${message.password}\nTime taken : ${time} ms`);
                 workers.map(w => w.terminate());
                 return process.exit(0);
             } else if (message.request) {
-                worker.postMessage({from : from, to: to});
-                console.log(`Starting Worker ${i} with interval ${from} - ${to}`);
+                worker.postMessage({from : from, to: to, input: input, algo: algo});
+                console.log(`Restarting Worker [${i}] with interval ${from} - ${to}`);
                 from = to;
                 to = next(to);
             }
         });
         worker.on('error', error => {
-            console.error(`Error Worker ${i} : ${error.name}\n${error.message}`);
+            console.error(`Error Worker [${i}] : ${error.name}\n${error.message}`);
         });
-        worker.on('exit', () => {
-            console.log(`Terminate Worker ${i}`);
+        worker.on('exit', code => {
+            if (code !== 0) console.log(`Worker [${i}] has stopped with code ${code}`);
         });
+        worker.postMessage({from: from, to: to, input: input, algo: algo});
+        console.log(`Starting Worker [${i}] with interval ${from} - ${to}`);
+        from = to;
+        to = next(to);
     }
-    console.log(`All the worker are processing ${input}`);
+    console.log(`\nAll the worker are processing ${input} (using ${algo})\n`);
 }
 
-crack(hash('zerty', 'md5'), 'md5', 1);
+crack('73b43f17232b391b9123adf40c1b65dd', 'md5', 10);
 
 //ab = 187ef4436122d1cc2f40dc2b92f0eba0
 //hell0 = 73b43f17232b391b9123adf40c1b65dd

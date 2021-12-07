@@ -1,37 +1,26 @@
 const { parentPort } = require('worker_threads');
 const { createHash } = require('crypto');
-const { Console } = require('console');
-const log = new Console(process.stdout, process.stderr);
+
+const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+
+/**
+ * 
+ * @param {String} input 
+ * @param {String} algo 
+ * @returns String
+ */
 
 function hash(input, algo) {
     return createHash(algo).update(input).digest('hex');
 }
 
-const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
-
-let firstMsg = true;
-let algo, input, from, to;
-
 parentPort.on('message', message => {
-    //parentPort.postMessage({password: 'lol'});
-    /*if (firstMsg) {
-        console.log('helloooooooo');
-        algo = message.algo;
-        input = message.input;
-        firstMsg = false;
-    }*/
-    log.log('hello');
+    const { to, algo, input } = message;
+    let { from } = message;
 
+    let eguess = hash(from, algo);
 
-    from = message.from;
-    to = message.to;
-
-    let eguess = hash(from, message.algo);
-    let test = 1;
-
-    log.log(eguess, input, eguess === input);
-
-    while(eguess !== input) {
+    while(eguess !== input && from !== to) {
         let last = from[from.length - 1];
         if (last === '9') {
             let arr = from.split('');
@@ -47,12 +36,9 @@ parentPort.on('message', message => {
             }
             from = arr.join('');
         } else from = `${from.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
-        eguess = hash(from, message.algo);
-        log.log(`test n°${test}`);
-        test++;
+        eguess = hash(from, algo);
     }
 
     if (eguess === input) parentPort.postMessage({password: from});
     else parentPort.postMessage({request: true});
-
 });
