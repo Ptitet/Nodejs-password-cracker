@@ -3,9 +3,22 @@ const { Worker } = require('worker_threads');
 
 const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
 
+/**
+ * 
+ * @param {String} input 
+ * @param {String} algo 
+ * @returns String
+ */
+
 function hash(input, algo) {
     return createHash(algo).update(input).digest('hex');
 }
+
+/**
+ * 
+ * @param {String} input 
+ * @returns String
+ */
 
 function next(input) {
     input = input.slice(0, input.length  - 4);
@@ -26,8 +39,15 @@ function next(input) {
     } else return `${input.slice(0, -1)}${dico[dico.indexOf(last) + 1]}aaaa`;
 }
 
+/**
+ * 
+ * @param {String} input 
+ * @param {String} algo 
+ * @param {Number} nbOfWorkers 
+ */
+
 function crack(input, algo, nbOfWorkers) {
-console.log(`Starting cracking ${input} (using ${algo})\nSpawning ${nbOfWorkers} workers...`);
+    console.log(`Starting cracking ${input} (using ${algo})\nSpawning ${nbOfWorkers} workers...`);
 
     let from = 'a';
     let to = 'aaaaa';
