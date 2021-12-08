@@ -2,6 +2,7 @@ const { parentPort } = require('worker_threads');
 const { createHash } = require('crypto');
 
 const dico = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789'.split('');
+let intervals = 1;
 
 /**
  * 
@@ -15,8 +16,12 @@ function hash(input, algo) {
 }
 
 parentPort.on('message', message => {
+    const start = Date.now();
+
     const { to, algo, input } = message;
     let { from } = message;
+
+    let test = 1;
 
     let eguess = hash(from, algo);
 
@@ -37,8 +42,12 @@ parentPort.on('message', message => {
             from = arr.join('');
         } else from = `${from.slice(0, -1)}${dico[dico.indexOf(last) + 1]}`;
         eguess = hash(from, algo);
+        test++;
     }
 
+    const time = Date.now() - start;
+
+    intervals++;
     if (eguess === input) parentPort.postMessage({password: from});
-    else parentPort.postMessage({request: true});
+    else parentPort.postMessage({request: true, intervals: intervals, testrate: test / (time / 1000)});
 });
